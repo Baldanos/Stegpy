@@ -1,0 +1,73 @@
+===
+Description
+===
+Stegpy is a simple Steganalysis script written in python
+
+===
+Requirements
+===
+
+ - The Python Imaging Library (PIL)
+ - TK toolkit
+
+
+===
+Usage
+===
+usage: stegpy.py [-h] [-w DESTFOLDER] [-ts SIZE] [-v] [-d] [-r] [-i] [-m] [-x]
+                 [-p {UDRL,RLUD,LRDU,LRUD,UDLR,DURL,DULR,RLDU}] [-rm REDMASK]
+                 [-gm GREENMASK] [-bm BLUEMASK] [-am ALPHAMASK] [-C] [-I]
+                 FILE
+
+Analyzes an image to find steganography data.
+
+positional arguments:
+  FILE                  file to analyze
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -w DESTFOLDER, --write DESTFOLDER
+                        use DESTFOLDER to write files
+  -ts SIZE, --thumbnail-size SIZE
+                        Use a thumbnail of maximum SIZE pixels to view
+                        generated images
+
+Visualisation:
+  Visualisation options. When specifying the -w switch, all generated images
+  will be written with an extension
+
+  -v, --visual          Display generated images
+  -d, --difference      Generates a difference image. If pixel is different
+                        from the next one, change its color
+  -r, --reverse         Generates a reversed image. Pixel value is binary
+                        reversed
+  -i, --invert          Generates a reversed image (pixel ^ 0xff)
+  -m, --mask            Generates a masked view of the image. If the masked
+                        channel is >0, the channel value for this pixel will
+                        be 0xff
+
+Data extraction:
+  Data extraction options. This is useful for extracting LSB data for
+  instance. You will need to set the channel masks to actually get data.
+  When specifying a filename with the -w switch, data will be written in a
+  file, otherwise on stdout
+
+  -x, --extract         Extracts data from the image
+  -p {UDRL,RLUD,LRDU,LRUD,UDLR,DURL,DULR,RLDU}, --path {UDRL,RLUD,LRDU,LRUD,UDLR,DURL,DULR,RLDU}
+                        The path to follow when extracting data : (Up - Down -
+                        Left - Right)
+  -rm REDMASK, --red-mask REDMASK
+                        The red channel mask
+  -gm GREENMASK, --green-mask GREENMASK
+                        The green channel mask
+  -bm BLUEMASK, --blue-mask BLUEMASK
+                        The blue channel mask
+  -am ALPHAMASK, --alpha-mask ALPHAMASK
+                        The alpha channel mask
+
+Image information:
+  Prints various information about the image
+
+  -C, --colors          Shows the colors used in the image
+  -I, --info            Shows the colors used in the image
+
