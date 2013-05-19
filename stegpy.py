@@ -6,13 +6,92 @@ import argparse
 from Tkinter import *
 from PIL import Image, ImageTk
 
-def showImage(title, image):
-    lblTitle=Label(text=title+' '+str(image.size))
-    lblTitle.pack()
-    tkImage = ImageTk.PhotoImage(image)
-    lblImage = Label(image=tkImage)
-    lblImage.image = tkImage
-    lblImage.pack()
+class Viewer():
+    
+    def __init__(self, image):
+        self.original = image
+        self.image = image.copy()
+        self.window = Tk()
+
+        self.genViews()
+        self.currentView = StringVar(self.window)
+        self.currentView.set('Original')
+        options = self.filters.keys();options.sort()
+        self.views = OptionMenu(self.window, self.currentView, *options, command=self.applyFilter)
+        self.views.pack()
+
+        self.tkImage = ImageTk.PhotoImage(image)
+        self.lblImage = Label(image=self.tkImage)
+        self.lblImage.image = self.tkImage
+        self.lblImage.pack()
+
+        self.window.mainloop()
+
+    def save(self):
+        return
+
+
+    def genViews(self):
+        """
+        Generates filters based on the source image
+        """
+        self.filters = {
+                'Original'                      : 0,
+                'Pixel difference'              : 1,
+                'Pixel invert (XOR)'            : 2,
+                'Pixel reverse (lsb<->msb)'     : 3,
+                'Value filter (00000001)'       : 4,
+                'Value filter (00000010)'       : 5,
+                'Value filter (00000100)'       : 6,
+                'Value filter (00001000)'       : 7,
+                'Value filter (00010000)'       : 8,
+                'Value filter (00100000)'       : 9,
+                'Value filter (01000000)'       : 10,
+                'Value filter (10000000)'       : 11,
+                }
+
+    def applyFilter(self, view):
+        """
+        Applies a filter to the image
+        """
+        view = self.filters[self.currentView.get()]
+        if view == 0:
+            self.showImage(self.currentView.get(), self.original)
+            return
+        elif view == 1 :
+            self.image = genDiff(self.original)
+        elif view == 2 :
+            self.image = genInvert(self.original)
+        elif view == 3 :
+            self.image = genReverse(self.original)
+        elif view == 4 :
+            self.image = genMask(self.original, 1,1,1)
+        elif view == 5 :
+            self.image = genMask(self.original, 2,2,2)
+        elif view == 6 :
+            self.image = genMask(self.original, 4,4,4)
+        elif view == 7 :
+            self.image = genMask(self.original, 8,8,8)
+        elif view == 8 :
+            self.image = genMask(self.original, 16,16,16)
+        elif view == 9 :
+            self.image = genMask(self.original, 32,32,32)
+        elif view == 10 :
+            self.image = genMask(self.original, 64,64,64)
+        elif view == 11 :
+            self.image = genMask(self.original, 128,128,128)
+        self.showImage(self.currentView.get(), self.image)
+        return
+
+
+    def showImage(self,title, image):
+        """
+        Updates the image in the window
+        """
+        self.tkImage = ImageTk.PhotoImage(image)
+        self.lblImage.configure(image=self.tkImage)
+        self.lblImage.image = self.tkImage
+
 
 def grouper(n, iterable, fillvalue=None):
     """
@@ -217,14 +296,8 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Analyzes an image to find steganography data.')
     parser.add_argument('filename', metavar='FILE', type=file, help='file to analyze')
-    parser.add_argument('-w', '--write', dest='output', metavar = 'DESTFOLDER', help='use DESTFOLDER to write files')
     parser.add_argument('-ts', '--thumbnail-size', dest='thumbsize', type=int, metavar='SIZE', default=0, help='Use a thumbnail of maximum SIZE pixels to view generated images')
-    visual = parser.add_argument_group('Visualisation', 'Visualisation options. When specifying the -w switch, all generated images will be written with an extension')
-    visual.add_argument('-v', '--visual', dest='visual', action='store_true', help='Display generated images')
-    visual.add_argument('-d', '--difference', dest='difference', action='store_true', help='Generates a difference image. If pixel is different from the next one, change its color')
-    visual.add_argument('-r', '--reverse', dest='reverse', action='store_true', help='Generates a reversed image. Pixel value is binary reversed')
-    visual.add_argument('-i', '--invert', dest='invert', action='store_true', help='Generates a reversed image (pixel ^ 0xff)')
-    visual.add_argument('-m', '--mask', dest='mask', action='store_true', help='Generates a masked view of the image. If the masked channel is >0, the channel value for this pixel will be 0xff')
+    parser.add_argument('-v', '--visual', dest='visual', action='store_true', help='Starts visual mode')
     extract = parser.add_argument_group('Data extraction', 'Data extraction options. This is useful for extracting LSB data for instance. You will need to set the channel masks to actually get data. When specifying a filename with the -w switch, data will be written in a file, otherwise on stdout')
     extract.add_argument('-x', '--extract', dest='extract', action='store_true', help='Extracts data from the image')
     extract.add_argument('-p', '--path', dest='path', type=str, choices=paths, default='LRUD', help='The path to follow when extracting data : (Up - Down - Left - Right)')
@@ -232,6 +305,7 @@ if __name__ == '__main__':
     extract.add_argument('-gm', '--green-mask', dest='greenmask', type=int, default=0, help='The green channel mask')
     extract.add_argument('-bm', '--blue-mask', dest='bluemask', type=int, default=0, help='The blue channel mask')
     extract.add_argument('-am', '--alpha-mask', dest='alphamask', type=int, help='The alpha channel mask')
+    extract.add_argument('-w', '--write', dest='output', type=file, metavar = 'DESTFILE', help='use DESTFILE to write data')
     info = parser.add_argument_group('Image information', 'Prints various information about the image')
     info.add_argument('-C', '--colors', dest='colors', action='store_true', help='Shows the colors used in the image')
     info.add_argument('-I', '--info', dest='info', action='store_true', help='Shows the colors used in the image')
@@ -262,8 +336,6 @@ if __name__ == '__main__':
     if args.colors:
         printColorInfos(orig)
 
-    if args.visual:
-        window=Tk()
 
     #Creating a thumbnail to work with
     if args.thumbsize:
@@ -272,46 +344,13 @@ if __name__ == '__main__':
     else:
         thumb = None
 
-    if args.difference:
-        if visual:
-            if thumb:
-                showImage('Difference', genDiff(thumb))
-            else:
-                showImage('Difference', genDiff(orig))
-        if output:
-            out = genDiff(orig)
-            out.save(output+os.path.basename(f.name)+'_difference.'+out.format.lower())
-    
-    if args.reverse:
-        if visual:
-            if thumb:
-                showImage('Reverse', genReverse(thumb))
-            else:
-                showImage('Reverse', genReverse(orig))
-        if output:
-            out = genReverse(orig)
-            out.save(output+os.path.basename(f.name)+'_reverse.'+out.format.lower())
-    
-    if args.invert:
-        if visual:
-            if thumb:
-                showImage('Invert', genInvert(thumb))
-            else:
-                showImage('Invert', genInvert(orig))
-        if output:
-            out = genInvert(orig)
-            out.save(output+os.path.basename(f.name)+'_invert.'+out.format.lower())
-    
-    if args.mask:
-        if visual:
-            if thumb:
-                showImage('Mask (%s,%s,%s,%s)' % (args.redmask, args.greenmask, args.bluemask, args.alphamask), genMask(thumb,args.redmask, args.greenmask, args.bluemask, args.alphamask))
-            else:
-                showImage('Mask (%s,%s,%s,%s)' % (args.redmask, args.greenmask, args.bluemask, args.alphamask), genMask(orig, args.redmask, args.greenmask, args.bluemask, args.alphamask))
-        if output:
-            out = genMask(orig, paths[args.path], args.redmask, args.greenmask, args.bluemask, args.alphamask)
-            out.save(output+os.path.basename(f.name)+'_mask.'+out.format.lower())
-    
+    if args.visual:
+        if thumb:
+            v = Viewer(thumb)
+        else:
+            v = Viewer(orig)
+        sys.exit(0)
+
     if args.extract:
         data = extractBits(orig, paths[args.path], args.redmask, args.greenmask, args.bluemask, args.alphamask) 
         if output:
@@ -322,6 +361,3 @@ if __name__ == '__main__':
             print 'Wrote data to ' + output+os.path.basename(args.filename.name)+'_data_%s_%s_%s_%s.bin' % (args.redmask, args.greenmask, args.bluemask, args.alphamask)
         else:
             sys.stdout.write(data)
-
-    if args.visual:
-        window.mainloop()
