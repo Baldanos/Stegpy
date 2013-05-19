@@ -14,9 +14,10 @@ Requirements
 ===
 Usage
 ===
-usage: stegpy.py [-h] [-w DESTFOLDER] [-ts SIZE] [-v] [-d] [-r] [-i] [-m] [-x]
+usage: stegpy.py [-h] [-ts SIZE] [-v] [-x]
                  [-p {UDRL,RLUD,LRDU,LRUD,UDLR,DURL,DULR,RLDU}] [-rm REDMASK]
-                 [-gm GREENMASK] [-bm BLUEMASK] [-am ALPHAMASK] [-C] [-I]
+                 [-gm GREENMASK] [-bm BLUEMASK] [-am ALPHAMASK] [-w DESTFILE]
+                 [-C] [-I]
                  FILE
 
 Analyzes an image to find steganography data.
@@ -26,25 +27,10 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  -w DESTFOLDER, --write DESTFOLDER
-                        use DESTFOLDER to write files
   -ts SIZE, --thumbnail-size SIZE
                         Use a thumbnail of maximum SIZE pixels to view
                         generated images
-
-Visualisation:
-  Visualisation options. When specifying the -w switch, all generated images
-  will be written with an extension
-
-  -v, --visual          Display generated images
-  -d, --difference      Generates a difference image. If pixel is different
-                        from the next one, change its color
-  -r, --reverse         Generates a reversed image. Pixel value is binary
-                        reversed
-  -i, --invert          Generates a reversed image (pixel ^ 0xff)
-  -m, --mask            Generates a masked view of the image. If the masked
-                        channel is >0, the channel value for this pixel will
-                        be 0xff
+  -v, --visual          Starts visual mode
 
 Data extraction:
   Data extraction options. This is useful for extracting LSB data for
@@ -64,10 +50,11 @@ Data extraction:
                         The blue channel mask
   -am ALPHAMASK, --alpha-mask ALPHAMASK
                         The alpha channel mask
+  -w DESTFILE, --write DESTFILE
+                        use DESTFILE to write data
 
 Image information:
   Prints various information about the image
 
   -C, --colors          Shows the colors used in the image
   -I, --info            Shows the colors used in the image
-
