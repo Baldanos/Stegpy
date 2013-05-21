@@ -21,7 +21,6 @@
 import os, sys
 import itertools
 import argparse
-import itertools
 from Tkinter import *
 from PIL import Image, ImageTk
 
