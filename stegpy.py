@@ -150,7 +150,6 @@ def extractBits(image, path=0, mr=0, mg=0, mb=0, ma=0):
         6 - Down-Up-Left-Right
         7 - Down-Up-Right-Left
     """
-    #TODO
     result = [] 
 
     if ma is None:
@@ -255,7 +254,6 @@ def genMask(image, mr=0, mg=0, mb=0, ma=0xff):
     """
     Generates an image with a color filter based on a bitmask
     """
-
     if ma is None:
         ma=0xff
 
@@ -389,7 +387,6 @@ if __name__ == '__main__':
 
     if args.colors:
         printColorInfos(orig)
-
 
     #Creating a thumbnail to work with
     if args.thumbsize:
