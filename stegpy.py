@@ -3,6 +3,7 @@
 import os, sys
 import itertools
 import argparse
+import itertools
 from Tkinter import *
 from PIL import Image, ImageTk
 
@@ -48,6 +49,8 @@ class Viewer():
                 'Value filter (00100000)'       : 9,
                 'Value filter (01000000)'       : 10,
                 'Value filter (10000000)'       : 11,
+                'Alpha layer visualisation'     : 12,
+                'Palette switch'                : 13,
                 }
 
     def applyFilter(self, view):
@@ -80,6 +83,10 @@ class Viewer():
             self.image = genMask(self.original, 64,64,64)
         elif view == 11 :
             self.image = genMask(self.original, 128,128,128)
+        elif view == 12 :
+            self.image = genAlpha(self.original)
+        elif view == 13 :
+            self.image = genPalette(self.original)
         self.showImage(self.currentView.get(), self.image)
         return
 
@@ -91,7 +98,6 @@ class Viewer():
         self.tkImage = ImageTk.PhotoImage(image)
         self.lblImage.configure(image=self.tkImage)
         self.lblImage.image = self.tkImage
-
 
 def grouper(n, iterable, fillvalue=None):
     """
@@ -171,6 +177,36 @@ def extractBits(image, path=0, mr=0, mg=0, mb=0, ma=0):
 
 
     return ''.join(chr(btoi(result[i:i+8])) for i in range(0,len(result),8))
+
+def genAlpha(image):
+    """
+    Generates a view of the alpha channel
+    """
+    if image.mode == 'RGBA':
+        out = image.copy()
+    else:
+        out = image.convert('RGBA')
+    out.putdata( [splitpalette[a] for r,g,b,a in out.getdata() ] )
+    return out
+
+def genPalette(image):
+    """
+    Replaces a palette with different values to view palette switches
+    """
+    if image.mode == 'P':
+        palette = []
+        for r in xrange(0,255,32):
+            for g in xrange(0,255,32):
+                for b in xrange(0,255,32):
+                    palette.append(r)
+                    palette.append(g)
+                    palette.append(b)
+
+        out = image.copy()
+        out.putpalette(palette[:768])
+        return out
+    return image
+
 
 def genInvert(image):
     """
@@ -294,6 +330,8 @@ if __name__ == '__main__':
 
     paths = { 'LRUD':0, 'RLUD':1, 'LRDU':2, 'RLDU':3, 'UDLR':4, 'UDRL':5, 'DULR':6, 'DURL':7 }
 
+    splitpalette = [v for v in itertools.product(range(0,255,32),repeat=3)]
+
     parser = argparse.ArgumentParser(description='Analyzes an image to find steganography data.')
     parser.add_argument('filename', metavar='FILE', type=file, help='file to analyze')
     parser.add_argument('-ts', '--thumbnail-size', dest='thumbsize', type=int, metavar='SIZE', default=0, help='Use a thumbnail of maximum SIZE pixels to view generated images')
@@ -309,7 +347,6 @@ if __name__ == '__main__':
     info = parser.add_argument_group('Image information', 'Prints various information about the image')
     info.add_argument('-C', '--colors', dest='colors', action='store_true', help='Shows the colors used in the image')
     info.add_argument('-I', '--info', dest='info', action='store_true', help='Shows the colors used in the image')
-
 
     args = parser.parse_args()
     if args.output:
