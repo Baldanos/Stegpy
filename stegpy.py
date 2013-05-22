@@ -135,6 +135,12 @@ def btoi(binValue):
     """
     return int(''.join([str(int(x)) for x in binValue]), 2)
 
+def reverse(b):
+    b = (b & 0xF0) >> 4 | (b & 0x0F) << 4;
+    b = (b & 0xCC) >> 2 | (b & 0x33) << 2;
+    b = (b & 0xAA) >> 1 | (b & 0x55) << 1;
+    return b
+
 def extractBits(image, path=0, mr=0, mg=0, mb=0, ma=0):
     """
     Extracts bits of data from image.
@@ -223,7 +229,6 @@ def genPalette(image):
         return out
     return image
 
-
 def genInvert(image):
     """
     Calculates the invert colors for an image
@@ -243,11 +248,10 @@ def genReverse(image):
     """
     if image.mode == 'RGBA':
         out = image.copy()
-        out.putdata( [(btoi(itob(r)[::-1]),btoi(itob(g)[::-1]),btoi(itob(b)[::-1]),a) for r,g,b,a in out.getdata()] )
+        out.putdata( [(reverse(r),reverse(g),reverse(b),a) for r,g,b,a in out.getdata()] )
     else:
         out = image.convert('RGB')
-        out.putdata( [(btoi(itob(r)[::-1]),btoi(itob(g)[::-1]),btoi(itob(b)[::-1])) for r,g,b in out.getdata()] )
-
+        out.putdata( [(reverse(r),reverse(g),reverse(b)) for r,g,b in out.getdata()] )
     return out
 
 def genMask(image, mr=0, mg=0, mb=0, ma=0xff):
@@ -265,8 +269,6 @@ def genMask(image, mr=0, mg=0, mb=0, ma=0xff):
         out.putdata( [((r&mr>0)*0xff,(g&mg>0)*0xff,(b&mb>0)*0xff) for r,g,b in out.getdata()] )
 
     return out
-
-
 
 def genDiff(image):
     """
