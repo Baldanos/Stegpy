@@ -48,7 +48,6 @@ class Viewer():
     def save(self):
         return
 
-
     def genViews(self):
         """
         Generates filters based on the source image
@@ -106,7 +105,6 @@ class Viewer():
             self.image = genPalette(self.original)
         self.showImage(self.currentView.get(), self.image)
         return
-
 
     def showImage(self,title, image):
         """
@@ -196,8 +194,6 @@ def extractBits(image, path=0, mr=0, mg=0, mb=0, ma=0):
                 result.append(bool(g & mg))
             if mb:
                 result.append(bool(b & mb))
-
-
     return ''.join(chr(btoi(result[i:i+8])) for i in range(0,len(result),8))
 
 def genAlpha(image):
@@ -239,7 +235,6 @@ def genInvert(image):
     else:
         out = image.convert('RGB')
         out.putdata( [(r^0xff,g^0xff,b^0xff) for r,g,b in out.getdata()] )
-
     return out
 
 def genReverse(image):
@@ -267,7 +262,6 @@ def genMask(image, mr=0, mg=0, mb=0, ma=0xff):
     else:
         out = image.convert('RGB')
         out.putdata( [((r&mr>0)*0xff,(g&mg>0)*0xff,(b&mb>0)*0xff) for r,g,b in out.getdata()] )
-
     return out
 
 def genDiff(image):
@@ -298,9 +292,7 @@ def genDiff(image):
                         out.putpixel((x,y),(255,255,255))
                 except:
                         out.putpixel((x,y),(0,0,0))
-
     return out
-
 
 def printColorInfos(image):
     """
