@@ -161,19 +161,19 @@ def extractBits(image, path=0, mr=0, mg=0, mb=0, ma=0, sb=0):
     if ma is None:
         ma=0
 
+    out = image.copy()
+
     #When reading from right to left, just flip the image
-    if path == 0 :
-        out = image.copy()
     if path & 0x1 :
-        out = image.transpose(Image.FLIP_LEFT_RIGHT)
+        out = out.transpose(Image.FLIP_LEFT_RIGHT)
 
     #When reading from down to up, flip the image
     if path & 0x2 :
-        out = image.transpose(Image.FLIP_TOP_BOTTOM)
-
+        out = out.transpose(Image.FLIP_TOP_BOTTOM)
+        
     #Revert the image when reading top-down first
     if path & 0x4 :
-        out = image.transpose(Image.FLIP_LEFT_RIGHT)
+        out = out.transpose(Image.FLIP_LEFT_RIGHT)
         out = out.transpose(Image.ROTATE_90)
 
     if out.mode == 'RGBA':
@@ -409,17 +409,19 @@ if __name__ == '__main__':
         if args.allpaths:
             for path in paths.keys():
                 data = extractBits(orig, paths[path], args.redmask, args.greenmask, args.bluemask, args.alphamask, args.skipbits) 
-                file = open(output+os.path.basename(args.filename.name)+'_data_%s_%s_%s_%s_%s.bin' % (args.redmask, args.greenmask, args.bluemask, args.alphamask, path), 'wb')
+                outfilename = output+os.path.basename(args.filename.name)+'_data_%s_%s_%s_%s_%s.bin' % (args.redmask, args.greenmask, args.bluemask, args.alphamask, path)
+                file = open(outfilename, 'wb')
                 file.write(data)
                 file.close()
-                print 'Wrote data to ' + output+os.path.basename(args.filename.name)+'_data_%s_%s_%s_%s_%s.bin' % (args.redmask, args.greenmask, args.bluemask, args.alphamask, path)
+                print 'Wrote data to %s' % outfilename
         else:
             data = extractBits(orig, paths[args.path], args.redmask, args.greenmask, args.bluemask, args.alphamask, args.skipbits) 
             if output:
-                file = open(output+os.path.basename(args.filename.name)+'_data_%s_%s_%s_%s_%s.bin' % (args.redmask, args.greenmask, args.bluemask, args.alphamask, args.path), 'wb')
+                outfilename = output+os.path.basename(args.filename.name)+'_data_%s_%s_%s_%s_%s.bin' % (args.redmask, args.greenmask, args.bluemask, args.alphamask, args.path)
+                file = open(outfilename, 'wb')
                 file.write(data)
                 file.close()
                 print ''
-                print 'Wrote data to ' + output+os.path.basename(args.filename.name)+'_data_%s_%s_%s_%s_%s.bin' % (args.redmask, args.greenmask, args.bluemask, args.alphamask, args.path)
+                print 'Wrote data to %s' % outfilename
             else:
                 sys.stdout.write(data)
