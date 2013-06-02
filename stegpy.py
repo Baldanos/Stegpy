@@ -416,7 +416,7 @@ if __name__ == '__main__':
                 print 'Wrote data to %s' % outfilename
         else:
             data = extractBits(orig, paths[args.path], args.redmask, args.greenmask, args.bluemask, args.alphamask, args.skipbits) 
-            if output:
+            if args.output:
                 outfilename = output+os.path.basename(args.filename.name)+'_data_%s_%s_%s_%s_%s.bin' % (args.redmask, args.greenmask, args.bluemask, args.alphamask, args.path)
                 file = open(outfilename, 'wb')
                 file.write(data)
