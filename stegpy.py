@@ -139,11 +139,11 @@ def reverse(b):
     b = (b & 0xAA) >> 1 | (b & 0x55) << 1;
     return b
 
-def extractBits(image, path=0, mr=0, mg=0, mb=0, ma=0):
+def extractBits(image, path=0, mr=0, mg=0, mb=0, ma=0, sb=0):
     """
     Extracts bits of data from image.
 
-    Mask represents the bits to extract
+    Masks represents the bits to extract
     Path means the path to follow to extract data :
         0 - Left-Right-Up-Down
         1 - Right-Left-Up-Down
@@ -153,6 +153,8 @@ def extractBits(image, path=0, mr=0, mg=0, mb=0, ma=0):
         5 - Up-Down-Right-Left
         6 - Down-Up-Left-Right
         7 - Down-Up-Right-Left
+
+    sb is used to skip the first n bits
     """
     result = [] 
 
@@ -194,6 +196,10 @@ def extractBits(image, path=0, mr=0, mg=0, mb=0, ma=0):
                 result.append(bool(g & mg))
             if mb:
                 result.append(bool(b & mb))
+
+    # Remove skipped bits
+    result = result[sb:]
+
     return ''.join(chr(btoi(result[i:i+8])) for i in range(0,len(result),8))
 
 def genAlpha(image):
@@ -347,31 +353,34 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--visual', dest='visual', action='store_true', help='Starts visual mode')
     extract = parser.add_argument_group('Data extraction', 'Data extraction options. This is useful for extracting LSB data for instance. You will need to set the channel masks to actually get data. When specifying a filename with the -w switch, data will be written in a file, otherwise on stdout')
     extract.add_argument('-x', '--extract', dest='extract', action='store_true', help='Extracts data from the image')
+    extract.add_argument('-a', '--all-paths', dest='allpaths', action='store_true', help='Extracts data in all possible paths. Save files in the image folder')
     extract.add_argument('-p', '--path', dest='path', type=str, choices=paths, default='LRUD', help='The path to follow when extracting data : (Up - Down - Left - Right)')
     extract.add_argument('-rm', '--red-mask', dest='redmask', type=int, default=0, help='The red channel mask')
     extract.add_argument('-gm', '--green-mask', dest='greenmask', type=int, default=0, help='The green channel mask')
     extract.add_argument('-bm', '--blue-mask', dest='bluemask', type=int, default=0, help='The blue channel mask')
     extract.add_argument('-am', '--alpha-mask', dest='alphamask', type=int, help='The alpha channel mask')
-    extract.add_argument('-w', '--write', dest='output', type=file, metavar = 'DESTFILE', help='use DESTFILE to write data')
+    extract.add_argument('-sb', '--skip-bits', dest='skipbits', type=int, default=0, help='Nuber of bits to skip')
+    extract.add_argument('-w', '--write', dest='output', type=str, metavar = 'DESTFILE', help='use DESTFILE to write data')
     info = parser.add_argument_group('Image information', 'Prints various information about the image')
     info.add_argument('-C', '--colors', dest='colors', action='store_true', help='Shows the colors used in the image')
     info.add_argument('-I', '--info', dest='info', action='store_true', help='Shows the colors used in the image')
 
     args = parser.parse_args()
-    if args.output:
-        if  os.path.isdir(args.output):
-            output = args.output
-        else:
-            print 'Error, %s is not a directory' % args.output
-            sys.exit(1)
-    else:
-        output = None
         
     try:
         orig = Image.open(args.filename)
     except IOError, e:
         print e.message
         sys.exit(1)
+
+    if args.output:
+        if  os.path.isdir(args.output):
+            output = os.path.abspath(args.output)+'/'
+        else:
+            print 'Error, %s is not a directory' % args.output
+            sys.exit(1)
+    else:
+        output = os.path.dirname(args.filename.name)+'/'
 
     if args.info:
         print 'Filename :        %s' % orig.filename
@@ -397,12 +406,20 @@ if __name__ == '__main__':
         sys.exit(0)
 
     if args.extract:
-        data = extractBits(orig, paths[args.path], args.redmask, args.greenmask, args.bluemask, args.alphamask) 
-        if output:
-            file = open(output+os.path.basename(args.filename.name)+'_data_%s_%s_%s_%s.bin' % (args.redmask, args.greenmask, args.bluemask, args.alphamask), 'wb')
-            file.write(data)
-            file.close()
-            print ''
-            print 'Wrote data to ' + output+os.path.basename(args.filename.name)+'_data_%s_%s_%s_%s.bin' % (args.redmask, args.greenmask, args.bluemask, args.alphamask)
+        if args.allpaths:
+            for path in paths.keys():
+                data = extractBits(orig, paths[path], args.redmask, args.greenmask, args.bluemask, args.alphamask, args.skipbits) 
+                file = open(output+os.path.basename(args.filename.name)+'_data_%s_%s_%s_%s_%s.bin' % (args.redmask, args.greenmask, args.bluemask, args.alphamask, path), 'wb')
+                file.write(data)
+                file.close()
+                print 'Wrote data to ' + output+os.path.basename(args.filename.name)+'_data_%s_%s_%s_%s_%s.bin' % (args.redmask, args.greenmask, args.bluemask, args.alphamask, path)
         else:
-            sys.stdout.write(data)
+            data = extractBits(orig, paths[args.path], args.redmask, args.greenmask, args.bluemask, args.alphamask, args.skipbits) 
+            if output:
+                file = open(output+os.path.basename(args.filename.name)+'_data_%s_%s_%s_%s_%s.bin' % (args.redmask, args.greenmask, args.bluemask, args.alphamask, args.path), 'wb')
+                file.write(data)
+                file.close()
+                print ''
+                print 'Wrote data to ' + output+os.path.basename(args.filename.name)+'_data_%s_%s_%s_%s_%s.bin' % (args.redmask, args.greenmask, args.bluemask, args.alphamask, args.path)
+            else:
+                sys.stdout.write(data)
