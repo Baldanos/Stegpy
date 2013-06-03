@@ -10,14 +10,14 @@ Requirements
  - The Python Imaging Library (PIL)
  - TK toolkit
 
-
 ===
 Usage
 ===
-usage: stegpy.py [-h] [-ts SIZE] [-sf FACTOR] [-v] [-x] [-a]
-                 [-p {UDRL,RLUD,LRDU,LRUD,UDLR,DURL,DULR,RLDU}] [-rm REDMASK]
-                 [-gm GREENMASK] [-bm BLUEMASK] [-am ALPHAMASK] [-sb SKIPBITS]
-                 [-w DESTFILE] [-C] [-I]
+usage: stegpy.py [-h] [-ts SIZE] [-sf FACTOR] [-v] [-x]
+                 [-p {rlud,lrdu,lrud,udlr,dulr,udrl,durl,rldu,*}]
+                 [-o {rgb,rga,rbg,rba,rag,rab,grb,gra,gbr,gba,gar,gab,brg,bra,bgr,bga,bar,bag,arg,arb,agr,agb,abr,abg,rgba,rgab,rbga,rbag,ragb,rabg,grba,grab,gbra,gbar,garb,gabr,brga,brag,bgra,bgar,barg,bagr,argb,arbg,agrb,agbr,abrg,abgr,*}]
+                 [-rm REDMASK] [-gm GREENMASK] [-bm BLUEMASK] [-am ALPHAMASK]
+                 [-sb SKIPBITS] [-w DESTFILE] [-C] [-I]
                  FILE
 
 Analyzes an image to find steganography data.
@@ -42,11 +42,11 @@ Data extraction:
   file, otherwise on stdout
 
   -x, --extract         Extracts data from the image
-  -a, --all-paths       Extracts data in all possible paths. Save files in the
-                        image folder
-  -p {UDRL,RLUD,LRDU,LRUD,UDLR,DURL,DULR,RLDU}, --path {UDRL,RLUD,LRDU,LRUD,UDLR,DURL,DULR,RLDU}
+  -p {rlud,lrdu,lrud,udlr,dulr,udrl,durl,rldu,*}, --path {rlud,lrdu,lrud,udlr,dulr,udrl,durl,rldu,*}
                         The path to follow when extracting data : (Up - Down -
                         Left - Right)
+  -o {rgb,rga,rbg,rba,rag,rab,grb,gra,gbr,gba,gar,gab,brg,bra,bgr,bga,bar,bag,arg,arb,agr,agb,abr,abg,rgba,rgab,rbga,rbag,ragb,rabg,grba,grab,gbra,gbar,garb,gabr,brga,brag,bgra,bgar,barg,bagr,argb,arbg,agrb,agbr,abrg,abgr,*}, --order {rgb,rga,rbg,rba,rag,rab,grb,gra,gbr,gba,gar,gab,brg,bra,bgr,bga,bar,bag,arg,arb,agr,agb,abr,abg,rgba,rgab,rbga,rbag,ragb,rabg,grba,grab,gbra,gbar,garb,gabr,brga,brag,bgra,bgar,barg,bagr,argb,arbg,agrb,agbr,abrg,abgr,*}
+                        The order the LSBs must be extracted
   -rm REDMASK, --red-mask REDMASK
                         The red channel mask
   -gm GREENMASK, --green-mask GREENMASK
