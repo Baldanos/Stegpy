@@ -51,7 +51,7 @@ class Viewer():
         Saves the filtered image to a file
         """
         import tkFileDialog
-        options = {'filetypes':[('image','.%s' % self.original.format.lower())]}
+        options = {'filetypes':[('PNG','.png'),('GIF','.gif')]}
         outfile = tkFileDialog.asksaveasfilename(**options)
         if outfile == '':
             return
