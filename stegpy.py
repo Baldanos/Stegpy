@@ -386,7 +386,7 @@ if __name__ == '__main__':
         output = os.path.dirname(args.filename.name)+'/'
 
     if args.info:
-        print 'Filename :        %s' % orig.filename
+        print 'Filename :        %s' % args.filename.name
         print 'Image size :      %s' % str(orig.size)
         print 'File format :     %s' % orig.format_description
         print ''
