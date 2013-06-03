@@ -40,12 +40,20 @@ class Viewer():
 
         self.tkImage = ImageTk.PhotoImage(image)
         self.lblImage = Label(image=self.tkImage)
+        self.lblImage.bind('<Button-3>', self.save)
         self.lblImage.image = self.tkImage
         self.lblImage.pack()
 
         self.window.mainloop()
 
-    def save(self):
+    def save(self, event):
+        """
+        Saves the filtered image to a file
+        """
+        import tkFileDialog
+        options = {'filetypes':[('image','.%s' % self.original.format.lower())]}
+        outfile = tkFileDialog.asksaveasfilename(**options)
+        self.image.save(outfile)
         return
 
     def genViews(self):
