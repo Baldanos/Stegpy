@@ -53,8 +53,11 @@ class Viewer():
         import tkFileDialog
         options = {'filetypes':[('image','.%s' % self.original.format.lower())]}
         outfile = tkFileDialog.asksaveasfilename(**options)
-        self.image.save(outfile)
-        return
+        if outfile == '':
+            return
+        else:
+            self.image.save(outfile)
+            return
 
     def genViews(self):
         """
