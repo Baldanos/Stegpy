@@ -161,7 +161,10 @@ def extractBits(image, path=0, mr=0, mg=0, mb=0, ma=0, sb=0):
     if ma is None:
         ma=0
 
-    out = image.copy()
+    if image.mode == 'P':
+        out = image.convert('RGBA')
+    else:
+        out = image.copy()
 
     #When reading from right to left, just flip the image
     if path & 0x1 :
