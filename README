@@ -14,10 +14,10 @@ Requirements
 ===
 Usage
 ===
-usage: stegpy.py [-h] [-ts SIZE] [-v] [-x]
+usage: stegpy.py [-h] [-ts SIZE] [-v] [-x] [-a]
                  [-p {UDRL,RLUD,LRDU,LRUD,UDLR,DURL,DULR,RLDU}] [-rm REDMASK]
-                 [-gm GREENMASK] [-bm BLUEMASK] [-am ALPHAMASK] [-w DESTFILE]
-                 [-C] [-I]
+                 [-gm GREENMASK] [-bm BLUEMASK] [-am ALPHAMASK] [-sb SKIPBITS]
+                 [-w DESTFILE] [-C] [-I]
                  FILE
 
 Analyzes an image to find steganography data.
@@ -39,6 +39,8 @@ Data extraction:
   file, otherwise on stdout
 
   -x, --extract         Extracts data from the image
+  -a, --all-paths       Extracts data in all possible paths. Save files in the
+                        image folder
   -p {UDRL,RLUD,LRDU,LRUD,UDLR,DURL,DULR,RLDU}, --path {UDRL,RLUD,LRDU,LRUD,UDLR,DURL,DULR,RLDU}
                         The path to follow when extracting data : (Up - Down -
                         Left - Right)
@@ -50,6 +52,8 @@ Data extraction:
                         The blue channel mask
   -am ALPHAMASK, --alpha-mask ALPHAMASK
                         The alpha channel mask
+  -sb SKIPBITS, --skip-bits SKIPBITS
+                        Nuber of bits to skip
   -w DESTFILE, --write DESTFILE
                         use DESTFILE to write data
 
@@ -57,4 +61,4 @@ Image information:
   Prints various information about the image
 
   -C, --colors          Shows the colors used in the image
-  -I, --info            Shows the colors used in the image
+  -I, --info            Shows image information
