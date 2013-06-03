@@ -364,6 +364,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Analyzes an image to find steganography data.')
     parser.add_argument('filename', metavar='FILE', type=file, help='file to analyze')
     parser.add_argument('-ts', '--thumbnail-size', dest='thumbsize', type=int, metavar='SIZE', default=0, help='Use a thumbnail of maximum SIZE pixels to view generated images')
+    parser.add_argument('-sf', '--scale-factor', dest='scalefactor', type=float, metavar='FACTOR', default=1, help='Scale the image to FACTOR. can be positive or a fraction')
     parser.add_argument('-v', '--visual', dest='visual', action='store_true', help='Starts visual mode')
     extract = parser.add_argument_group('Data extraction', 'Data extraction options. This is useful for extracting LSB data for instance. You will need to set the channel masks to actually get data. When specifying a filename with the -w switch, data will be written in a file, otherwise on stdout')
     extract.add_argument('-x', '--extract', dest='extract', action='store_true', help='Extracts data from the image')
@@ -406,14 +407,10 @@ if __name__ == '__main__':
         printColorInfos(orig)
 
     #Creating a thumbnail to work with
-    if args.thumbsize:
-        thumb = orig.copy()
-        thumb.thumbnail((args.thumbsize, args.thumbsize),Image.NEAREST)
-    else:
-        thumb = None
-
     if args.visual:
-        if thumb:
+        if args.thumbsize:
+            thumb = orig.copy()
+            thumb.thumbnail((args.thumbsize, args.thumbsize),Image.NEAREST)
             v = Viewer(thumb)
         else:
             v = Viewer(orig)
