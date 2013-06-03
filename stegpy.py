@@ -150,7 +150,7 @@ def reverse(b):
     b = (b & 0xAA) >> 1 | (b & 0x55) << 1;
     return b
 
-def extractBits(image, path=0, mr=0, mg=0, mb=0, ma=0, sb=0):
+def extractBits(image, path=0, mr=0, mg=0, mb=0, ma=0, sb=0, order='rgb'):
     """
     Extracts bits of data from image.
 
@@ -193,23 +193,15 @@ def extractBits(image, path=0, mr=0, mg=0, mb=0, ma=0, sb=0):
     if out.mode == 'RGBA':
         for pix in out.getdata():
             r,g,b,a = pix
-            if mr:
-                result.append(bool(r & mr))
-            if mg:
-                result.append(bool(g & mg))
-            if mb:
-                result.append(bool(b & mb))
-            if ma:
-                result.append(bool(a & ma))
+            for chan in order:
+                result.append(bool(locals()[chan] & locals()['m'+chan]))
     else:
+        #In case the alpha channel has been added by mistake
+        order = order.replace('a','')
         for pix in out.getdata():
             r,g,b = pix
-            if mr:
-                result.append(bool(r & mr))
-            if mg:
-                result.append(bool(g & mg))
-            if mb:
-                result.append(bool(b & mb))
+            for chan in order:
+                result.append(bool(locals()[chan] & locals()['m'+chan]))
 
     # Remove skipped bits
     result = result[sb:]
@@ -354,11 +346,17 @@ def printColorInfos(image):
         print '  Blue distribution :    %s' % str(list(set([b for r,g,b in colors.values()])))
 
 
-        
+def saveFile(filename, data):
+    file = open(filename, 'wb')
+    file.write(data)
+    file.close()
+    print 'Wrote data to %s' % outfilename
+
 if __name__ == '__main__':
 
-    paths = { 'LRUD':0, 'RLUD':1, 'LRDU':2, 'RLDU':3, 'UDLR':4, 'UDRL':5, 'DULR':6, 'DURL':7 }
-
+    paths = { 'lrud':0, 'rlud':1, 'lrdu':2, 'rldu':3, 'udlr':4, 'udrl':5, 'dulr':6, 'durl':7}
+    orders = [''.join(o) for o in itertools.permutations('rgba',3)]
+    orders += [''.join(o) for o in itertools.permutations('rgba',4)]
     splitpalette = [v for v in itertools.product(range(0,255,32),repeat=3)]
 
     parser = argparse.ArgumentParser(description='Analyzes an image to find steganography data.')
@@ -368,8 +366,8 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--visual', dest='visual', action='store_true', help='Starts visual mode')
     extract = parser.add_argument_group('Data extraction', 'Data extraction options. This is useful for extracting LSB data for instance. You will need to set the channel masks to actually get data. When specifying a filename with the -w switch, data will be written in a file, otherwise on stdout')
     extract.add_argument('-x', '--extract', dest='extract', action='store_true', help='Extracts data from the image')
-    extract.add_argument('-a', '--all-paths', dest='allpaths', action='store_true', help='Extracts data in all possible paths. Save files in the image folder')
-    extract.add_argument('-p', '--path', dest='path', type=str, choices=paths, default='LRUD', help='The path to follow when extracting data : (Up - Down - Left - Right)')
+    extract.add_argument('-p', '--path', dest='path', type=str, choices=paths.keys()+['*'], default='lrud', help='The path to follow when extracting data : (Up - Down - Left - Right)')
+    extract.add_argument('-o', '--order', dest='order', type=str, choices=orders+['*'], default='rgba', help='The order the LSBs must be extracted ')
     extract.add_argument('-rm', '--red-mask', dest='redmask', type=int, default=0, help='The red channel mask')
     extract.add_argument('-gm', '--green-mask', dest='greenmask', type=int, default=0, help='The green channel mask')
     extract.add_argument('-bm', '--blue-mask', dest='bluemask', type=int, default=0, help='The blue channel mask')
@@ -422,22 +420,31 @@ if __name__ == '__main__':
         sys.exit(0)
 
     if args.extract:
-        if args.allpaths:
+        if args.path == '*':
             for path in paths.keys():
-                data = extractBits(orig, paths[path], args.redmask, args.greenmask, args.bluemask, args.alphamask, args.skipbits) 
-                outfilename = output+os.path.basename(args.filename.name)+'_data_%s_%s_%s_%s_%s.bin' % (args.redmask, args.greenmask, args.bluemask, args.alphamask, path)
-                file = open(outfilename, 'wb')
-                file.write(data)
-                file.close()
-                print 'Wrote data to %s' % outfilename
+                if args.order == '*':
+                    for order in orders:
+                        data = extractBits(orig, paths[path], args.redmask, args.greenmask, args.bluemask, args.alphamask, args.skipbits, order) 
+                        outfilename = output+os.path.basename(args.filename.name)+'_data_%s_%s_%s_%s_%s_%s.bin' % (args.redmask, args.greenmask, args.bluemask, args.alphamask, path, order)
+                        saveFile(outfilename, data)
+                else:
+                    data = extractBits(orig, paths[path], args.redmask, args.greenmask, args.bluemask, args.alphamask, args.skipbits, args.order) 
+                    outfilename = output+os.path.basename(args.filename.name)+'_data_%s_%s_%s_%s_%s_%s.bin' % (args.redmask, args.greenmask, args.bluemask, args.alphamask, path, args.order)
+                    saveFile(outfilename, data)
         else:
-            data = extractBits(orig, paths[args.path], args.redmask, args.greenmask, args.bluemask, args.alphamask, args.skipbits) 
-            if args.output:
-                outfilename = output+os.path.basename(args.filename.name)+'_data_%s_%s_%s_%s_%s.bin' % (args.redmask, args.greenmask, args.bluemask, args.alphamask, args.path)
-                file = open(outfilename, 'wb')
-                file.write(data)
-                file.close()
-                print ''
-                print 'Wrote data to %s' % outfilename
+            if args.order == '*':
+                for order in orders:
+                    data = extractBits(orig, paths[args.path], args.redmask, args.greenmask, args.bluemask, args.alphamask, args.skipbits, order)
+                    outfilename = output+os.path.basename(args.filename.name)+'_data_%s_%s_%s_%s_%s_%s.bin' % (args.redmask, args.greenmask, args.bluemask, args.alphamask, args.path, order)
+                    saveFile(outfilename, data)
             else:
-                sys.stdout.write(data)
+                data = extractBits(orig, paths[args.path], args.redmask, args.greenmask, args.bluemask, args.alphamask, args.skipbits, args.order)
+                if args.output:
+                    outfilename = output+os.path.basename(args.filename.name)+'_data_%s_%s_%s_%s_%s_%s.bin' % (args.redmask, args.greenmask, args.bluemask, args.alphamask, args.path, args.order)
+                    file = open(outfilename, 'wb')
+                    file.write(data)
+                    file.close()
+                    print ''
+                    print 'Wrote data to %s' % outfilename
+                else:
+                    sys.stdout.write(data)
