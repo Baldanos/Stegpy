@@ -406,12 +406,17 @@ if __name__ == '__main__':
     if args.colors:
         printColorInfos(orig)
 
-    #Creating a thumbnail to work with
+    #Enter visual mode
     if args.visual:
+        #Creating a thumbnail to work with
         if args.thumbsize:
             thumb = orig.copy()
             thumb.thumbnail((args.thumbsize, args.thumbsize),Image.NEAREST)
             v = Viewer(thumb)
+        #If scale factor is used
+        elif args.scalefactor:
+            image = orig.resize(tuple([int(args.scalefactor*x) for x in orig.size]), Image.NEAREST)
+            v = Viewer(image)
         else:
             v = Viewer(orig)
         sys.exit(0)

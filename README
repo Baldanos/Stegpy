@@ -14,7 +14,7 @@ Requirements
 ===
 Usage
 ===
-usage: stegpy.py [-h] [-ts SIZE] [-v] [-x] [-a]
+usage: stegpy.py [-h] [-ts SIZE] [-sf FACTOR] [-v] [-x] [-a]
                  [-p {UDRL,RLUD,LRDU,LRUD,UDLR,DURL,DULR,RLDU}] [-rm REDMASK]
                  [-gm GREENMASK] [-bm BLUEMASK] [-am ALPHAMASK] [-sb SKIPBITS]
                  [-w DESTFILE] [-C] [-I]
@@ -30,6 +30,9 @@ optional arguments:
   -ts SIZE, --thumbnail-size SIZE
                         Use a thumbnail of maximum SIZE pixels to view
                         generated images
+  -sf FACTOR, --scale-factor FACTOR
+                        Scale the image to FACTOR. can be positive or a
+                        fraction
   -v, --visual          Starts visual mode
 
 Data extraction:
@@ -61,4 +64,5 @@ Image information:
   Prints various information about the image
 
   -C, --colors          Shows the colors used in the image
-  -I, --info            Shows image information
+  -I, --info            Shows the colors used in the image
+
