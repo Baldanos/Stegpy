@@ -372,7 +372,9 @@ def saveFile(filename, data):
 if __name__ == '__main__':
 
     paths = { 'lrud':0, 'rlud':1, 'lrdu':2, 'rldu':3, 'udlr':4, 'udrl':5, 'dulr':6, 'durl':7}
-    orders = [''.join(o) for o in itertools.permutations('rgba',3)]
+    orders = [''.join(o) for o in itertools.permutations('rgba',1)]
+    orders += [''.join(o) for o in itertools.permutations('rgba',2)]
+    orders += [''.join(o) for o in itertools.permutations('rgba',3)]
     orders += [''.join(o) for o in itertools.permutations('rgba',4)]
     splitpalette = [v for v in itertools.product(range(0,255,32),repeat=3)]
 
