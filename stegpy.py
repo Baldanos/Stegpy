@@ -211,14 +211,16 @@ def extractBits(image, path=0, mr=0, mg=0, mb=0, ma=0, sb=0, order='rgb'):
         for pix in out.getdata():
             r,g,b,a = pix
             for chan in order:
-                result.append(bool(locals()[chan] & locals()['m'+chan]))
+                if locals()['m'+chan]:
+                    result.append(bool(locals()[chan] & locals()['m'+chan]))
     else:
         #In case the alpha channel has been added by mistake
         order = order.replace('a','')
         for pix in out.getdata():
             r,g,b = pix
             for chan in order:
-                result.append(bool(locals()[chan] & locals()['m'+chan]))
+                if locals()['m'+chan]:
+                    result.append(bool(locals()[chan] & locals()['m'+chan]))
 
     # Remove skipped bits
     result = result[sb:]
