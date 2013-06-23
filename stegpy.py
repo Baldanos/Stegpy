@@ -55,7 +55,7 @@ class Viewer():
         """
         Displays the coordinates in the status bar 
         """
-        self.setStatus("Coordinates : (%s:%s)" % (int(event.x/args.scalefactor), int(event.y/args.scalefactor)))
+        self.setStatus("Coordinates : (%s:%s)" % (int((event.x-0.1)/args.scalefactor), int((event.y-0.1)/args.scalefactor)))
 
     def setStatus(self, text):
         """
