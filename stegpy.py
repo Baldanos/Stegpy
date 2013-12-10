@@ -42,7 +42,7 @@ class Viewer():
 
         self.tkImage = ImageTk.PhotoImage(image)
         self.lblImage = Label(image=self.tkImage)
-        self.lblImage.bind('<Button-1>', self.displayCoordinates)
+        self.lblImage.bind('<Button-1>', self.displayInfos)
         self.lblImage.bind('<Button-3>', self.save)
         self.lblImage.image = self.tkImage
         self.lblImage.pack()
@@ -53,13 +53,19 @@ class Viewer():
 
         self.window.mainloop()
 
-    def displayCoordinates(self, event):
+    def displayInfos(self, event):
         """
         Displays the coordinates in the status bar
         """
-        self.setStatus("Coordinates : (%s:%s)" %
-                (int((event.x-0.1)/args.scalefactor),
-                    int((event.y-0.1)/args.scalefactor)))
+        x = int((event.x-0.1)/args.scalefactor)
+        y = int((event.y-0.1)/args.scalefactor)
+        pixel = orig.getpixel((x,y))
+        self.setStatus("Coordinates : (%s:%s) - Pixel value : (%s,%s,%s)" %
+                (
+                    x, y, 
+                    pixel[0], pixel[1], pixel[2]
+                    )
+                )
 
     def setStatus(self, text):
         """
