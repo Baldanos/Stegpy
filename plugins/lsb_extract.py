@@ -1,9 +1,9 @@
 import itertools
 from PIL import Image
-class alpha():
+class lsb_extract():
 
     def __init__(self):
-        self.name="LSB"
+        self.name="lsb_extract"
         self.description="Extracts data from the LSB data"
         self.inputdata="image"
         self.parameters = {
@@ -92,24 +92,4 @@ class alpha():
         return int(''.join([str(int(x)) for x in binValue]), 2)
 
 def register():
-    return alpha()
-    
-#    extract = parser.add_argument_group('Data extraction', 'Data extraction options. This is useful for extracting LSB data for instance. You will need to set the channel masks to actually get data. When specifying a filename with the -w switch, data will be written in a file, otherwise on stdout')
-#    extract.add_argument('-x', '--extract', dest='extract', action='store_true',
-#            help='Extracts data from the image')
-#    extract.add_argument('-p', '--path', dest='path', type=str,
-#            choices=paths.keys()+['*'], default='lrud',
-#            help='The path to follow when extracting data : (Up - Down - Left - Right)')
-#    extract.add_argument('-o', '--order', dest='order', type=str,
-#            choices=orders+['*'], default='rgba',
-#            help='The order the LSBs must be extracted ')
-#    extract.add_argument('-rm', '--red-mask', dest='redmask', type=int,
-#            default=0, help='The red channel mask')
-#    extract.add_argument('-gm', '--green-mask', dest='greenmask', type=int,
-#            default=0, help='The green channel mask')
-#    extract.add_argument('-bm', '--blue-mask', dest='bluemask', type=int,
-#            default=0, help='The blue channel mask')
-#    extract.add_argument('-am', '--alpha-mask', dest='alphamask', type=int,
-#            help='The alpha channel mask')
-#    extract.add_argument('-sb', '--skip-bits', dest='skipbits', type=int,
-#            default=0, help='Nuber of bits to skip')
+    return lsb_extract()

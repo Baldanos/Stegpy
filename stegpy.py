@@ -139,56 +139,6 @@ def reverse(b):
     b = (b & 0xAA) >> 1 | (b & 0x55) << 1
     return b
 
-def printColorInfos(image):
-    """
-    displays color information about the file
-    """
-    print 'File color mode : %s' % image.mode
-    print ''
-    if image.mode == 'P':
-        print ''
-        print 'Palette information :'
-        palette = image.getpalette()
-        colors = {number:[color, (palette[color*3], palette[(color*3)+1],
-            palette[(color*3)+2])]
-            for number, color in image.getcolors()}
-
-        numbers = colors.keys()
-        numbers.sort();numbers.reverse()
-        print '  Nb   Color            Times used'
-        for number in numbers:
-            print '  %03s  %15s  (%s times)' % \
-                    (colors[number][0], colors[number][1], number)
-        image = image.convert('RGB')
-
-    print 'Image colors : '
-    colors = {n:c for n, c in [color for color in image.getcolors()]}
-    numbers = colors.keys()
-    numbers.sort();numbers.reverse()
-    print '  Color           Times used'
-    for number in numbers:
-        print '  %15s (%02s times)' % (colors[number], number)
-    print ''
-    print 'Color statistics : '
-    if image.mode == 'RGBA':
-        print '  Red distribution :     %s' % \
-                str(list(set([r for r,g,b,a in colors.values()])))
-        print '  Green distribution :   %s' % \
-                str(list(set([g for r,g,b,a in colors.values()])))
-        print '  Blue distribution :    %s' % \
-                str(list(set([b for r,g,b,a in colors.values()])))
-        print '  Alpha distribution :   %s' % \
-                str(list(set([a for r,g,b,a in colors.values()])))
-    else:
-        stat = image.convert('RGB')
-        print '  Red distribution :     %s' % \
-                str(list(set([r for r,g,b in colors.values()])))
-        print '  Green distribution :   %s' % \
-                str(list(set([g for r,g,b in colors.values()])))
-        print '  Blue distribution :    %s' % \
-                str(list(set([b for r,g,b in colors.values()])))
-
-
 def saveFile(filename, data):
     outfile = open(filename, 'wb')
     outfile.write(data)
@@ -246,8 +196,8 @@ if __name__ == '__main__':
             choices = [plugin.name for plugin in commandPlugins],
             help='Use the following plugin (unset to have a list)')
     for plugin in commandPlugins:
+        a = parser.add_argument_group(plugin.name, description=plugin.description)
         if plugin.parameters is not None:
-            a = parser.add_argument_group(plugin.name, description=plugin.description)
             for argument in plugin.parameters.keys():
                 a.add_argument('-'+argument, dest = argument, help=plugin.parameters[argument])
 
@@ -287,8 +237,9 @@ if __name__ == '__main__':
             for plugin in commandPlugins:
                 if plugin.name == args.plugin:
                     break
-            for parameter in plugin.parameters.keys():
-                setattr(plugin, parameter, getattr(args, parameter))
+            if plugin.parameters is not None:
+                for parameter in plugin.parameters.keys():
+                    setattr(plugin, parameter, getattr(args, parameter))
             print plugin.process(orig)
 
             pass
@@ -296,51 +247,3 @@ if __name__ == '__main__':
     else:
         print "Error : Please use either -C or -V"
         parser.print_usage()
-    
-    #if args.extract:
-    #    if args.path == '*':
-    #        for path in paths.keys():
-    #            if args.order == '*':
-    #                for order in orders:
-    #                    data = extractBits(orig, paths[path], args.redmask,
-    #                            args.greenmask, args.bluemask, args.alphamask,
-    #                            args.skipbits, order)
-    #                    outfilename = output+os.path.basename(args.filename.name)+\
-    #                            '_data_%s_%s_%s_%s_%s_%s.bin' % \
-    #                            (args.redmask, args.greenmask, args.bluemask,
-    #                                    args.alphamask, path, order)
-    #                    saveFile(outfilename, data)
-    #            else:
-    #                data = extractBits(orig, paths[path], args.redmask,
-    #                        args.greenmask, args.bluemask, args.alphamask,
-    #                        args.skipbits, args.order)
-    #                outfilename = output+os.path.basename(args.filename.name)+\
-    #                        '_data_%s_%s_%s_%s_%s_%s.bin' % \
-    #                        (args.redmask, args.greenmask, args.bluemask,
-    #                                args.alphamask, path, args.order)
-    #                saveFile(outfilename, data)
-    #    else:
-    #        if args.order == '*':
-    #            for order in orders:
-    #                data = extractBits(orig, paths[args.path], args.redmask,
-    #                        args.greenmask, args.bluemask, args.alphamask,
-    #                        args.skipbits, order)
-    #                outfilename = output+os.path.basename(args.filename.name)+\
-    #                        '_data_%s_%s_%s_%s_%s_%s.bin' % \
-    #                        (args.redmask, args.greenmask, args.bluemask,
-    #                                args.alphamask, args.path, order)
-    #                saveFile(outfilename, data)
-    #        else:
-    #            data = extractBits(orig, paths[args.path], args.redmask, args.greenmask, args.bluemask, args.alphamask, args.skipbits, args.order)
-    #            if args.output:
-    #                outfilename = output+os.path.basename(args.filename.name)+\
-    #                        '_data_%s_%s_%s_%s_%s_%s.bin' % \
-    #                        (args.redmask, args.greenmask, args.bluemask,
-    #                                args.alphamask, args.path, args.order)
-    #                outfile = open(outfilename, 'wb')
-    #                outfile.write(data)
-    #                outfile.close()
-    #                print ''
-    #                print 'Wrote data to %s' % outfilename
-    #            else:
-    #                sys.stdout.write(data)
