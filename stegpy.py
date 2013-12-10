@@ -63,7 +63,7 @@ class Viewer():
         pixel = orig.getpixel((x,y))
         self.setStatus("Coordinates : (%s:%s) - Pixel value : (%s,%s,%s)" %
                 (
-                    x, y, 
+                    x, y,
                     pixel[0], pixel[1], pixel[2]
                     )
                 )
@@ -139,66 +139,6 @@ def reverse(b):
     b = (b & 0xAA) >> 1 | (b & 0x55) << 1
     return b
 
-def extractBits(image, path=0, mr=0, mg=0, mb=0, ma=0, sb=0, order='rgb'):
-    """
-    Extracts bits of data from image.
-
-    Masks represents the bits to extract
-    Path means the path to follow to extract data :
-        0 - Left-Right-Up-Down
-        1 - Right-Left-Up-Down
-        2 - Left-Right-Down-Up
-        3 - Right-Left-Down-Up
-        4 - Up-Down-Left-Right
-        5 - Up-Down-Right-Left
-        6 - Down-Up-Left-Right
-        7 - Down-Up-Right-Left
-
-    sb is used to skip the first n bits
-    """
-    result = []
-
-    if ma is None:
-        ma = 0
-
-    if image.mode == 'P':
-        out = image.convert('RGBA')
-    else:
-        out = image.copy()
-
-    #When reading from right to left, just flip the image
-    if path & 0x1 :
-        out = out.transpose(Image.FLIP_LEFT_RIGHT)
-
-    #When reading from down to up, flip the image
-    if path & 0x2 :
-        out = out.transpose(Image.FLIP_TOP_BOTTOM)
-      
-    #Revert the image when reading top-down first
-    if path & 0x4 :
-        out = out.transpose(Image.FLIP_LEFT_RIGHT)
-        out = out.transpose(Image.ROTATE_90)
-
-    if out.mode == 'RGBA':
-        for pix in out.getdata():
-            r, g, b = pix
-            for chan in order:
-                if locals()['m'+chan]:
-                    result.append(bool(locals()[chan] & locals()['m'+chan]))
-    else:
-        #In case the alpha channel has been added by mistake
-        order = order.replace('a','')
-        for pix in out.getdata():
-            r, g, b = pix
-            for chan in order:
-                if locals()['m'+chan]:
-                    result.append(bool(locals()[chan] & locals()['m'+chan]))
-
-    # Remove skipped bits
-    result = result[sb:]
-
-    return ''.join(chr(btoi(result[i:i+8])) for i in range(0, len(result), 8))
-
 def printColorInfos(image):
     """
     displays color information about the file
@@ -255,7 +195,8 @@ def saveFile(filename, data):
     outfile.close()
     print 'Wrote data to %s' % outfilename
 
-viewPlugins=[]
+viewPlugins = []
+commandPlugins = []
 plugins = []
 
 def loadPlugins():
@@ -271,6 +212,8 @@ def loadPlugins():
         plugin = plug.register()
         if plugin.mode == 'visual':
             viewPlugins.append(plugin)
+        elif plugin.mode == 'command':
+            commandPlugins.append(plugin)
         else:
             plugins.append(plugin)
 
@@ -289,65 +232,32 @@ if __name__ == '__main__':
             description='Analyzes an image to find steganography data.')
     parser.add_argument('filename', metavar='FILE', type=file,
             help='file to analyze')
-    parser.add_argument('-ts', '--thumbnail-size', dest='thumbsize', type=int,
-            metavar='SIZE', default=0, help='Use a thumbnail of maximum SIZE pixels to view generated images')
-    parser.add_argument('-sf', '--scale-factor', dest='scalefactor', type=float,
-            metavar='FACTOR', default=1, help='Scale the image to FACTOR. can be positive or a fraction')
-    parser.add_argument('-V', '--visual', dest='visual', action='store_true',
+    visualMode = parser.add_argument_group('Visual mode')
+    visualMode.add_argument('-V', '--visual', dest='visual', action='store_true',
             help='Starts visual mode')
-    extract = parser.add_argument_group('Data extraction', 'Data extraction options. This is useful for extracting LSB data for instance. You will need to set the channel masks to actually get data. When specifying a filename with the -w switch, data will be written in a file, otherwise on stdout')
-    extract.add_argument('-x', '--extract', dest='extract', action='store_true',
-            help='Extracts data from the image')
-    extract.add_argument('-p', '--path', dest='path', type=str,
-            choices=paths.keys()+['*'], default='lrud',
-            help='The path to follow when extracting data : (Up - Down - Left - Right)')
-    extract.add_argument('-o', '--order', dest='order', type=str,
-            choices=orders+['*'], default='rgba',
-            help='The order the LSBs must be extracted ')
-    extract.add_argument('-rm', '--red-mask', dest='redmask', type=int,
-            default=0, help='The red channel mask')
-    extract.add_argument('-gm', '--green-mask', dest='greenmask', type=int,
-            default=0, help='The green channel mask')
-    extract.add_argument('-bm', '--blue-mask', dest='bluemask', type=int,
-            default=0, help='The blue channel mask')
-    extract.add_argument('-am', '--alpha-mask', dest='alphamask', type=int,
-            help='The alpha channel mask')
-    extract.add_argument('-sb', '--skip-bits', dest='skipbits', type=int,
-            default=0, help='Nuber of bits to skip')
-    extract.add_argument('-w', '--write', dest='output', type=str,
-            metavar='DESTFILE', help='use DESTFILE to write data')
-    info = parser.add_argument_group('Image information',
-            'Prints various information about the image')
-    info.add_argument('-C', '--colors', dest='colors', action='store_true',
-            help='Shows the colors used in the image')
-    info.add_argument('-I', '--info', dest='info', action='store_true',
-            help='Shows the colors used in the image')
+    visualMode.add_argument('-ts', '--thumbnail-size', dest='thumbsize', type=int,
+            metavar='SIZE', default=0, help='Use a thumbnail of maximum SIZE pixels to view generated images')
+    visualMode.add_argument('-sf', '--scale-factor', dest='scalefactor', type=float,
+            metavar='FACTOR', default=1, help='Scale the image to FACTOR. can be positive or a fraction')
+    commandGroup = parser.add_argument_group('Command mode')
+    commandGroup.add_argument('-C', '--command', dest='command', action='store_true',
+            help='Starts command mode')
+    commandGroup.add_argument('-p', '--plugin', dest='plugin',
+            choices = [plugin.name for plugin in commandPlugins],
+            help='Use the following plugin (unset to have a list)')
+    for plugin in commandPlugins:
+        if plugin.parameters is not None:
+            a = parser.add_argument_group(plugin.name, description=plugin.description)
+            for argument in plugin.parameters.keys():
+                a.add_argument('-'+argument, dest = argument, help=plugin.parameters[argument])
 
     args = parser.parse_args()
-      
+
     try:
         orig = Image.open(args.filename)
     except IOError, e:
         print e.message
         sys.exit(1)
-
-    if args.output:
-        if  os.path.isdir(args.output):
-            output = os.path.abspath(args.output)+'/'
-        else:
-            print 'Error, %s is not a directory' % args.output
-            sys.exit(1)
-    else:
-        output = os.path.dirname(args.filename.name)+'/'
-
-    if args.info:
-        print 'Filename :        %s' % args.filename.name
-        print 'Image size :      %s' % str(orig.size)
-        print 'File format :     %s' % orig.format_description
-        print ''
-
-    if args.colors:
-        printColorInfos(orig)
 
     #Enter visual mode
     if args.visual:
@@ -363,51 +273,74 @@ if __name__ == '__main__':
         else:
             v = Viewer(orig)
         sys.exit(0)
-
-    if args.extract:
-        if args.path == '*':
-            for path in paths.keys():
-                if args.order == '*':
-                    for order in orders:
-                        data = extractBits(orig, paths[path], args.redmask,
-                                args.greenmask, args.bluemask, args.alphamask,
-                                args.skipbits, order)
-                        outfilename = output+os.path.basename(args.filename.name)+\
-                                '_data_%s_%s_%s_%s_%s_%s.bin' % \
-                                (args.redmask, args.greenmask, args.bluemask,
-                                        args.alphamask, path, order)
-                        saveFile(outfilename, data)
-                else:
-                    data = extractBits(orig, paths[path], args.redmask,
-                            args.greenmask, args.bluemask, args.alphamask,
-                            args.skipbits, args.order)
-                    outfilename = output+os.path.basename(args.filename.name)+\
-                            '_data_%s_%s_%s_%s_%s_%s.bin' % \
-                            (args.redmask, args.greenmask, args.bluemask,
-                                    args.alphamask, path, args.order)
-                    saveFile(outfilename, data)
+    elif args.command:
+        if args.plugin is None:
+            print "Missing plugin name, use one of the following :"
+            for plug in commandPlugins:
+                if plug.mode == "command":
+                    print "%s  - %s" % (plug.name, plug.description)
+        elif args.plugin not in [plugin.name for plugin in commandPlugins]:
+            print "Error: Plugin does not exist"
+            parser.print_usage()
         else:
-            if args.order == '*':
-                for order in orders:
-                    data = extractBits(orig, paths[args.path], args.redmask,
-                            args.greenmask, args.bluemask, args.alphamask,
-                            args.skipbits, order)
-                    outfilename = output+os.path.basename(args.filename.name)+\
-                            '_data_%s_%s_%s_%s_%s_%s.bin' % \
-                            (args.redmask, args.greenmask, args.bluemask,
-                                    args.alphamask, args.path, order)
-                    saveFile(outfilename, data)
-            else:
-                data = extractBits(orig, paths[args.path], args.redmask, args.greenmask, args.bluemask, args.alphamask, args.skipbits, args.order)
-                if args.output:
-                    outfilename = output+os.path.basename(args.filename.name)+\
-                            '_data_%s_%s_%s_%s_%s_%s.bin' % \
-                            (args.redmask, args.greenmask, args.bluemask,
-                                    args.alphamask, args.path, args.order)
-                    outfile = open(outfilename, 'wb')
-                    outfile.write(data)
-                    outfile.close()
-                    print ''
-                    print 'Wrote data to %s' % outfilename
-                else:
-                    sys.stdout.write(data)
+            #Get the right plugin
+            for plugin in commandPlugins:
+                if plugin.name == args.plugin:
+                    break
+            for parameter in plugin.parameters.keys():
+                setattr(plugin, parameter, getattr(args, parameter))
+            print plugin.process(orig)
+
+            pass
+
+    else:
+        print "Error : Please use either -C or -V"
+        parser.print_usage()
+    
+    #if args.extract:
+    #    if args.path == '*':
+    #        for path in paths.keys():
+    #            if args.order == '*':
+    #                for order in orders:
+    #                    data = extractBits(orig, paths[path], args.redmask,
+    #                            args.greenmask, args.bluemask, args.alphamask,
+    #                            args.skipbits, order)
+    #                    outfilename = output+os.path.basename(args.filename.name)+\
+    #                            '_data_%s_%s_%s_%s_%s_%s.bin' % \
+    #                            (args.redmask, args.greenmask, args.bluemask,
+    #                                    args.alphamask, path, order)
+    #                    saveFile(outfilename, data)
+    #            else:
+    #                data = extractBits(orig, paths[path], args.redmask,
+    #                        args.greenmask, args.bluemask, args.alphamask,
+    #                        args.skipbits, args.order)
+    #                outfilename = output+os.path.basename(args.filename.name)+\
+    #                        '_data_%s_%s_%s_%s_%s_%s.bin' % \
+    #                        (args.redmask, args.greenmask, args.bluemask,
+    #                                args.alphamask, path, args.order)
+    #                saveFile(outfilename, data)
+    #    else:
+    #        if args.order == '*':
+    #            for order in orders:
+    #                data = extractBits(orig, paths[args.path], args.redmask,
+    #                        args.greenmask, args.bluemask, args.alphamask,
+    #                        args.skipbits, order)
+    #                outfilename = output+os.path.basename(args.filename.name)+\
+    #                        '_data_%s_%s_%s_%s_%s_%s.bin' % \
+    #                        (args.redmask, args.greenmask, args.bluemask,
+    #                                args.alphamask, args.path, order)
+    #                saveFile(outfilename, data)
+    #        else:
+    #            data = extractBits(orig, paths[args.path], args.redmask, args.greenmask, args.bluemask, args.alphamask, args.skipbits, args.order)
+    #            if args.output:
+    #                outfilename = output+os.path.basename(args.filename.name)+\
+    #                        '_data_%s_%s_%s_%s_%s_%s.bin' % \
+    #                        (args.redmask, args.greenmask, args.bluemask,
+    #                                args.alphamask, args.path, args.order)
+    #                outfile = open(outfilename, 'wb')
+    #                outfile.write(data)
+    #                outfile.close()
+    #                print ''
+    #                print 'Wrote data to %s' % outfilename
+    #            else:
+    #                sys.stdout.write(data)
