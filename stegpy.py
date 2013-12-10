@@ -410,7 +410,7 @@ if __name__ == '__main__':
             metavar='SIZE', default=0, help='Use a thumbnail of maximum SIZE pixels to view generated images')
     parser.add_argument('-sf', '--scale-factor', dest='scalefactor', type=float,
             metavar='FACTOR', default=1, help='Scale the image to FACTOR. can be positive or a fraction')
-    parser.add_argument('-v', '--visual', dest='visual', action='store_true',
+    parser.add_argument('-V', '--visual', dest='visual', action='store_true',
             help='Starts visual mode')
     extract = parser.add_argument_group('Data extraction', 'Data extraction options. This is useful for extracting LSB data for instance. You will need to set the channel masks to actually get data. When specifying a filename with the -w switch, data will be written in a file, otherwise on stdout')
     extract.add_argument('-x', '--extract', dest='extract', action='store_true',
