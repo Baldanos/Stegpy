@@ -120,30 +120,6 @@ class Viewer():
         self.lblImage.configure(image=self.tkImage)
         self.lblImage.image = self.tkImage
 
-def itob(s):
-    """
-    Returns the binary expression of an int value as a string
-    """
-    return bin(s)[2:].zfill(8)
-
-def btoi(binValue):
-    """
-    Takes a list of strings, a list of integers or a string and
-    returns a decimal value
-    """
-    return int(''.join([str(int(x)) for x in binValue]), 2)
-
-def reverse(b):
-    b = (b & 0xF0) >> 4 | (b & 0x0F) << 4
-    b = (b & 0xCC) >> 2 | (b & 0x33) << 2
-    b = (b & 0xAA) >> 1 | (b & 0x55) << 1
-    return b
-
-def saveFile(filename, data):
-    outfile = open(filename, 'wb')
-    outfile.write(data)
-    outfile.close()
-    print 'Wrote data to %s' % outfilename
 
 viewPlugins = []
 commandPlugins = []
@@ -167,41 +143,40 @@ def loadPlugins():
         else:
             plugins.append(plugin)
 
+def parseVisualParameters(parent = None):
+    params = argparse.ArgumentParser( parents=[parent],
+            description="Visual mode parameters")
+    params.add_argument('-ts', '--thumbnail-size', dest='thumbsize', type=int,
+            metavar='SIZE', default=0, help='Use a thumbnail of maximum SIZE pixels to view generated images')
+    params.add_argument('-sf', '--scale-factor', dest='scalefactor', type=float,
+            metavar='FACTOR', default=1, help='Scale the image to FACTOR. can be positive or a fraction')
+    return params
+
+def parseCommandParameters( parent=None):
+    params = argparse.ArgumentParser( parents=[parent], add_help=False,
+            description="Command mode parameters")
+    params.add_argument('-p', '--plugin', dest='plugin',
+            choices = [plugin.name for plugin in commandPlugins],
+            help='Use the following plugin (unset to have a list)')
+    return params
+
 if __name__ == '__main__':
 
     loadPlugins()
 
-    paths = { 'lrud':0, 'rlud':1, 'lrdu':2, 'rldu':3, 'udlr':4, 'udrl':5,
-            'dulr':6, 'durl':7}
-    orders = [''.join(o) for o in itertools.permutations('rgba', 1)]
-    orders += [''.join(o) for o in itertools.permutations('rgba', 2)]
-    orders += [''.join(o) for o in itertools.permutations('rgba', 3)]
-    orders += [''.join(o) for o in itertools.permutations('rgba', 4)]
 
     parser = argparse.ArgumentParser(
-            description='Analyzes an image to find steganography data.')
+            description='Analyzes an image to find steganography data.',
+            add_help=False)
     parser.add_argument('filename', metavar='FILE', type=file,
             help='file to analyze')
-    visualMode = parser.add_argument_group('Visual mode')
-    visualMode.add_argument('-V', '--visual', dest='visual', action='store_true',
+    applicationMode = parser.add_mutually_exclusive_group(required=True)
+    applicationMode.add_argument('-V', '--visual', dest='visual', action='store_true',
             help='Starts visual mode')
-    visualMode.add_argument('-ts', '--thumbnail-size', dest='thumbsize', type=int,
-            metavar='SIZE', default=0, help='Use a thumbnail of maximum SIZE pixels to view generated images')
-    visualMode.add_argument('-sf', '--scale-factor', dest='scalefactor', type=float,
-            metavar='FACTOR', default=1, help='Scale the image to FACTOR. can be positive or a fraction')
-    commandGroup = parser.add_argument_group('Command mode')
-    commandGroup.add_argument('-C', '--command', dest='command', action='store_true',
+    applicationMode.add_argument('-C', '--command', dest='command', action='store_true',
             help='Starts command mode')
-    commandGroup.add_argument('-p', '--plugin', dest='plugin',
-            choices = [plugin.name for plugin in commandPlugins],
-            help='Use the following plugin (unset to have a list)')
-    for plugin in commandPlugins:
-        a = parser.add_argument_group(plugin.name, description=plugin.description)
-        if plugin.parameters is not None:
-            for argument in plugin.parameters.keys():
-                a.add_argument('-'+argument, dest = argument, help=plugin.parameters[argument])
 
-    args = parser.parse_args()
+    args = parser.parse_known_args()[0]
 
     try:
         orig = Image.open(args.filename)
@@ -211,6 +186,8 @@ if __name__ == '__main__':
 
     #Enter visual mode
     if args.visual:
+        parser = parseVisualParameters(parser)
+        args = parser.parse_known_args()[0]
         #Creating a thumbnail to work with
         if args.thumbsize:
             thumb = orig.copy()
@@ -223,27 +200,23 @@ if __name__ == '__main__':
         else:
             v = Viewer(orig)
         sys.exit(0)
+
     elif args.command:
+        commandParser = parseCommandParameters(parser)
+        args = commandParser.parse_known_args()[0]
         if args.plugin is None:
-            print "Missing plugin name, use one of the following :"
-            for plug in commandPlugins:
-                if plug.mode == "command":
-                    print "%s  - %s" % (plug.name, plug.description)
-        elif args.plugin not in [plugin.name for plugin in commandPlugins]:
-            print "Error: Plugin does not exist"
-            parser.print_usage()
+            commandParser.print_help()
         else:
             #Get the right plugin
             for plugin in commandPlugins:
                 if plugin.name == args.plugin:
                     break
             if plugin.parameters is not None:
-                for parameter in plugin.parameters.keys():
-                    setattr(plugin, parameter, getattr(args, parameter))
+                pluginParser = plugin.get_argParser()
+                pluginParser.parents=[parser, commandParser]
+                args = pluginParser.parse_known_args()[0]
+                for param in plugin.parameters.keys():
+                    setattr(plugin, param, getattr(args, param))
             print plugin.process(orig)
 
-            pass
-
-    else:
-        print "Error : Please use either -C or -V"
-        parser.print_usage()
+        pass
