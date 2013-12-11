@@ -1,8 +1,14 @@
 import itertools
 from PIL import Image
+import os
 
 paths = { 'lrud':0, 'rlud':1, 'lrdu':2, 'rldu':3, 'udlr':4, 'udrl':5,
                         'dulr':6, 'durl':7}
+
+orders = [''.join(o) for o in itertools.permutations('rgba', 1)]
+orders += [''.join(o) for o in itertools.permutations('rgba', 2)]
+orders += [''.join(o) for o in itertools.permutations('rgba', 3)]
+orders += [''.join(o) for o in itertools.permutations('rgba', 4)]
 
 class lsb_extract():
 
@@ -17,26 +23,24 @@ class lsb_extract():
                 'mb':'Blue mask',
                 'ma':'Alpha mask',
                 'sb':'Skip first n bits',
-                'order':'Color order'
+                'order':'Color order',
+                'w':'Write images in folder'
                 }
         self.mr=0
         self.mg=0
         self.mb=0
         self.ma=0
         self.sb=0
+        self.w=False
         self.order='rgb'
         self.mode="command"
 
     def get_argParser(self):
         import argparse
-        orders = [''.join(o) for o in itertools.permutations('rgba', 1)]
-        orders += [''.join(o) for o in itertools.permutations('rgba', 2)]
-        orders += [''.join(o) for o in itertools.permutations('rgba', 3)]
-        orders += [''.join(o) for o in itertools.permutations('rgba', 4)]
         parser = argparse.ArgumentParser()
 
         a = parser.add_argument_group(self.name, description=self.description)
-        a.add_argument('--path', dest = 'path', type=str, choices=paths.keys(),
+        a.add_argument('--path', dest = 'path', type=str, choices=paths.keys()+['*'],
                     help="Path to follow when extracting", default='lrud')
         a.add_argument('--mr', dest = 'mr', type=int,
                     help='Red mask', default=0)
@@ -48,12 +52,39 @@ class lsb_extract():
                     help='Alpha mask', default=0)
         a.add_argument('--sb', dest = 'sb', type=int,
                     help='Skip bits', default=0)
-        a.add_argument('--order', dest = 'order', type=str, choices=orders,
+        a.add_argument('--order', dest = 'order', type=str, choices=orders+['*'],
                     help='Color order', default='rgb')
+        a.add_argument('-w', dest = 'write', action='store_true',
+                    help='Write images in folder', default=False)
         return parser
 
-
     def process(self, image):
+        if self.path == '*':
+            for path in paths.keys():
+                if self.order == '*':
+                    for order in orders:
+                        self.path=path
+                        self.order=order
+                        data = self._extractBits(image) 
+                        outfilename = os.path.basename(image.filename)+'_data_%s_%s_%s_%s_%s_%s.bin' % (self.mr, self.mg, self.mb, self.ma, path, order)
+                        self._saveFile(outfilename, data)
+                else:
+                    self.path=path
+                    data = self._extractBits(image) 
+                    outfilename = os.path.basename(image.filename)+'_data_%s_%s_%s_%s_%s_%s.bin' % (self.mr, self.mg, self.mb, self.ma, path, self.order)
+                    self._saveFile(outfilename, data)
+        else:
+            if self.order == '*':
+                for order in orders:
+                    self.order=order
+                    data = self._extractBits(image)
+                    outfilename = os.path.basename(image.filename)+'_data_%s_%s_%s_%s_%s_%s.bin' % (self.mr, self.mg, self.mb, self.ma, self.path, order)
+                    self._saveFile(outfilename, data)
+            else:
+                data = self._extractBits(image) 
+                return data
+
+    def _extractBits(self, image):
         """
         Extracts bits of data from image.
 
@@ -126,7 +157,7 @@ class lsb_extract():
         outfile = open(filename, 'wb')
         outfile.write(data)
         outfile.close()
-        print 'Wrote data to %s' % outfilename
+        print 'Wrote data to %s' % filename
 
 def register():
     return lsb_extract()
