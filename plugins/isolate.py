@@ -10,9 +10,10 @@ class isolate():
                 'rb':'Blue reference',
                 'ra':'Alpha reference'
                 }
-        self.mr=0
-        self.mg=0
-        self.mb=0
+        self.rr=0
+        self.rg=0
+        self.rb=0
+        self.ra=0
         self.mode="visual"
 
     def process(self, image):
@@ -29,14 +30,8 @@ class isolate():
                 for r, g, b in out.getdata()] )
         return out
 
-    def _highlight(r,g,b):
-        if (r == rr and g == rg and b == rb):
-            return (0, 0, 0)
-        else:
-            return (255, 255, 255)
-
-    def _highlight(r,g,b, a):
-        if (r == rr and g == rg and b == rb and a == ra):
+    def _highlight(self, r, g, b, a=0):
+        if (r == self.rr and g == self.rg and b == self.rb and a == self.ra):
             return (0, 0, 0, 0)
         else:
             return (255, 255, 255, 255)
