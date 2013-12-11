@@ -216,7 +216,10 @@ if __name__ == '__main__':
                 pluginParser.parents=[parser, commandParser]
                 args = pluginParser.parse_known_args()[0]
                 for param in plugin.parameters.keys():
-                    setattr(plugin, param, getattr(args, param))
+                    try:
+                        setattr(plugin, param, getattr(args, param))
+                    except AttributeError, e:
+                        pass
             print plugin.process(orig)
 
         pass
