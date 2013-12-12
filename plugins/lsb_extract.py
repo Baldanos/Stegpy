@@ -2,6 +2,15 @@ import itertools
 from PIL import Image
 import os
 
+#Path means the path to follow to extract data :
+#    0 - Left-Right-Up-Down
+#    1 - Right-Left-Up-Down
+#    2 - Left-Right-Down-Up
+#    3 - Right-Left-Down-Up
+#    4 - Up-Down-Left-Right
+#    5 - Up-Down-Right-Left
+#    6 - Down-Up-Left-Right
+#    7 - Down-Up-Right-Left
 paths = { 'lrud':0, 'rlud':1, 'lrdu':2, 'rldu':3, 'udlr':4, 'udrl':5,
                         'dulr':6, 'durl':7}
 
@@ -60,46 +69,38 @@ class lsb_extract():
 
     def process(self, image):
         if self.path == '*':
-            for path in paths.keys():
-                if self.order == '*':
+            if self.order == '*':
+                for path in paths.keys():
                     for order in orders:
-                        self.path=path
-                        self.order=order
+                        self.path = path
+                        self.order = order
                         data = self._extractBits(image) 
                         outfilename = os.path.basename(image.filename)+'_data_%s_%s_%s_%s_%s_%s.bin' % (self.mr, self.mg, self.mb, self.ma, path, order)
                         self._saveFile(outfilename, data)
-                else:
-                    self.path=path
+            else:
+                for path in paths.keys():
+                    self.path = path
                     data = self._extractBits(image) 
                     outfilename = os.path.basename(image.filename)+'_data_%s_%s_%s_%s_%s_%s.bin' % (self.mr, self.mg, self.mb, self.ma, path, self.order)
                     self._saveFile(outfilename, data)
         else:
             if self.order == '*':
                 for order in orders:
-                    self.order=order
+                    self.order = order
                     data = self._extractBits(image)
                     outfilename = os.path.basename(image.filename)+'_data_%s_%s_%s_%s_%s_%s.bin' % (self.mr, self.mg, self.mb, self.ma, self.path, order)
                     self._saveFile(outfilename, data)
             else:
                 data = self._extractBits(image) 
                 return data
+        return ''
 
     def _extractBits(self, image):
         """
         Extracts bits of data from image.
 
         Masks represents the bits to extract
-        Path means the path to follow to extract data :
-            0 - Left-Right-Up-Down
-            1 - Right-Left-Up-Down
-            2 - Left-Right-Down-Up
-            3 - Right-Left-Down-Up
-            4 - Up-Down-Left-Right
-            5 - Up-Down-Right-Left
-            6 - Down-Up-Left-Right
-            7 - Down-Up-Right-Left
 
-        sb is used to skip the first n bits
         """
         result = []
 
@@ -111,17 +112,17 @@ class lsb_extract():
         else:
             out = image.copy()
 
+        path = paths[self.path]
         #When reading from right to left, just flip the image
-        self.path = paths[self.path]
-        if self.path & 0x1 :
+        if path & 0x1 :
             out = out.transpose(Image.FLIP_LEFT_RIGHT)
 
         #When reading from down to up, flip the image
-        if self.path & 0x2 :
+        if path & 0x2 :
             out = out.transpose(Image.FLIP_TOP_BOTTOM)
 
         #Revert the image when reading top-down first
-        if self.path & 0x4 :
+        if path & 0x4 :
             out = out.transpose(Image.FLIP_LEFT_RIGHT)
             out = out.transpose(Image.ROTATE_90)
 
