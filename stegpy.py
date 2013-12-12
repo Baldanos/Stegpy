@@ -19,11 +19,12 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
-import os, sys
-import itertools
+import os
+import sys
 import argparse
 from Tkinter import Tk , StringVar, OptionMenu, Label
 import tkSimpleDialog
+import tkFileDialog
 from PIL import Image, ImageTk
 
 class Viewer():
@@ -60,13 +61,9 @@ class Viewer():
         """
         x = int((event.x-0.1)/args.scalefactor)
         y = int((event.y-0.1)/args.scalefactor)
-        pixel = orig.getpixel((x,y))
-        self.setStatus("Coordinates : (%s:%s) - Pixel value : (%s,%s,%s)" %
-                (
-                    x, y,
-                    pixel[0], pixel[1], pixel[2]
-                    )
-                )
+        pixel = orig.getpixel((x, y))
+        self.setStatus("Coordinates : (%s:%s) - Pixel value : %s" %
+                (x, y, str(pixel)))
 
     def setStatus(self, text):
         """
@@ -78,7 +75,6 @@ class Viewer():
         """
         Saves the filtered image to a file
         """
-        import tkFileDialog
         options = {'filetypes':[('PNG','.png'),('GIF','.gif')]}
         outfile = tkFileDialog.asksaveasfilename(**options)
         if outfile == '':
@@ -91,7 +87,7 @@ class Viewer():
         """
         Generates filters based on the source image
         """
-        self.filters={}
+        self.filters = {}
         for plug in viewPlugins:
             self.filters.update({plug.name:viewPlugins.index(plug)})
 
@@ -103,9 +99,10 @@ class Viewer():
         plugin = viewPlugins[view]
         if plugin.parameters:
             for param in plugin.parameters.keys():
-                a = tkSimpleDialog.askinteger('Question', plugin.parameters[param])
+                a = tkSimpleDialog.askinteger(
+                        'Question', plugin.parameters[param])
                 if a is not None:
-                    setattr(viewPlugins[view],param,a)
+                    setattr(viewPlugins[view], param, a)
         self.image = viewPlugins[view].process(self.original)
 
         self.showImage(self.currentView.get(), self.image)
@@ -126,8 +123,6 @@ commandPlugins = []
 plugins = []
 
 def loadPlugins():
-    import os
-    import sys
     sys.path.insert(0,'plugins/')
     plugs = []
     for filename in os.listdir('plugins/'):
@@ -147,9 +142,11 @@ def parseVisualParameters(parent = None):
     params = argparse.ArgumentParser( parents=[parent],
             description="Visual mode parameters")
     params.add_argument('-ts', '--thumbnail-size', dest='thumbsize', type=int,
-            metavar='SIZE', default=0, help='Use a thumbnail of maximum SIZE pixels to view generated images')
+            metavar='SIZE', default=0,
+            help='Use a thumbnail of maximum SIZE pixels to view generated images')
     params.add_argument('-sf', '--scale-factor', dest='scalefactor', type=float,
-            metavar='FACTOR', default=1, help='Scale the image to FACTOR. can be positive or a fraction')
+            metavar='FACTOR', default=1,
+            help='Scale the image to FACTOR. can be positive or a fraction')
     return params
 
 def parseCommandParameters( parent=None):
@@ -171,10 +168,10 @@ if __name__ == '__main__':
     parser.add_argument('filename', metavar='FILE', type=file,
             help='file to analyze')
     applicationMode = parser.add_mutually_exclusive_group(required=True)
-    applicationMode.add_argument('-V', '--visual', dest='visual', action='store_true',
-            help='Starts visual mode')
-    applicationMode.add_argument('-C', '--command', dest='command', action='store_true',
-            help='Starts command mode')
+    applicationMode.add_argument('-V', '--visual', dest='visual',
+            action='store_true', help='Starts visual mode')
+    applicationMode.add_argument('-C', '--command', dest='command',
+            action='store_true', help='Starts command mode')
 
     args = parser.parse_known_args()[0]
 
@@ -213,7 +210,7 @@ if __name__ == '__main__':
                     break
             if plugin.parameters is not None:
                 pluginParser = plugin.get_argParser()
-                pluginParser.parents=[parser, commandParser]
+                pluginParser.parents = [parser, commandParser]
                 args = pluginParser.parse_known_args()[0]
                 for param in plugin.parameters.keys():
                     try:
