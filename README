@@ -33,7 +33,7 @@ optional arguments:
   -sf FACTOR, --scale-factor FACTOR
                         Scale the image to FACTOR. can be positive or a
                         fraction
-  -v, --visual          Starts visual mode
+  -V, --visual          Starts visual mode
 
 Data extraction:
   Data extraction options. This is useful for extracting LSB data for
